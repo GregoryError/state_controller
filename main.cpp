@@ -4,10 +4,10 @@
 #include <QString>
 
 #include "networkworker.h"
+#include <QCoreApplication>
 
 
-
-double pinger(const char* addr) // returns average time
+double pinger(const char* addr, QString& res) // returns average time
 {
     std::array<char, 128> buffer;
     std::string result;
@@ -58,38 +58,37 @@ double pinger(const char* addr) // returns average time
     for (std::size_t end = avg_time.size() - 1; end > 0; --end)
         avg_time_result += avg_time[end];
 
-    double d_result = std::stod(avg_time_result);
+    double d_result = 0.0;
+    d_result = std::stod(avg_time_result);
 
     if (d_result < 1) return 0.0;
+
+    res = QString::fromStdString(resume);
 
     return d_result;
 }
 
 
-
 int main(int argc, char* argv[])
 {
+    QCoreApplication a(argc, argv);
 
+    QString resume;
+    networkworker sender;
 
-    // networkworker obj(nullptr);
-    //  obj.goUrl();
+    double res_time = 4.0;
 
-    argv[1] = "ping ya.ru -c 3";
-
-    auto val = pinger(argv[1]);
-
-    std::cout << "val = " << val << '\n';
-
-
-    if (val < 1) std::cout << "Connection issue\n";
-
-    if (val > 15)
+    while (res_time < 7.5)
     {
-        std::cout << "Val: " << val << '\n';
-
+        res_time = pinger("ping 8.8.8.8 -c 3", resume);
+        if (res_time == 0.0) break;
     }
 
-    return 0;
+    system("tshark -a duration:120");
+    sender.goUrl(resume + "\n Сниффер включен!");
+
+
+    return a.exec();
 }
 
 
